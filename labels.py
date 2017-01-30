@@ -10,7 +10,7 @@ class Image:
         self.dir = im_dir
         self.data = self.load_data()
         self.tumor_type = None
-        self.rois = {}
+        self.roi = None
         self.rois_dir = rois_dir
         self.label_dir = label_dir
         self.mask_dir = mask_dir
@@ -83,6 +83,10 @@ class Image:
             return mask
 
 
+    def create_roi(self):
+        self.roi = Roi(self, self.rois_dir)
+
+
 class Roi:
     """
     Roi class
@@ -94,6 +98,7 @@ class Roi:
         self.dir = self.create_dir(rois_dir)
         self.nuclei, self.cytoplasm, self.background = [None] * 3
         self.rois = {}
+        self.create_rois()
 
 
     def create_dir(self, rois_dir):
@@ -114,7 +119,7 @@ class Roi:
         if self.rois:
             return self.rois
         else:
-            if (self.nuclei, self.cytoplasm, self.background) is not None:
+            if (self.nuclei and self.cytoplasm and self.background) is not None:
                 pass
             else:
                 self.create_rois()
@@ -142,12 +147,14 @@ class Roi:
             except FileNotFoundError:
                 print('{} roi not found'.format(_type))
 
-            for r in roi_array: # FIXME
+            for r in roi_array.values(): # FIXME
                 xy = []
                 for x, y in zip(r['x'], r['y']):
                     xy.append([x, y])
                 xy_list.append(np.array(xy))
             setattr(self, _type, xy_list)
+
+        self.get_rois()
 
 
 class Label:
@@ -167,7 +174,9 @@ class Label:
         self.data = None
         self.ds = {'background': (-1, (255, 0, 0), -1), # FIXME
                    'cytoplasm': (-1, (0, 255, 0), -1),
-                   'nuclei': (-1, (0, 0, 255), 2)}
+                   'nuclei': (-1, (0, 0, 255), -1),
+                   'border': (-1, (0, 0, 0), 2)}
+
 
     def create_dir(self, label_dir):
         """
@@ -231,11 +240,15 @@ class Label:
         if self.redraw():
             print(self.rel_image.data)
             data = self.rel_image.data.copy()
-            for _type in ('background', 'cytoplasm', 'nuclei'):
-                xy_list = self.roi.rois[_type]
+            rois = self.roi.get_rois()
+            for _type in ('background', 'cytoplasm', 'nuclei', 'border'):
+                if _type == 'border': # FIXME
+                    xy_list = rois['nuclei']
+                else:
+                    xy_list = rois[_type]
+                ds = self.ds[_type]
                 for xy in xy_list:
-                    cv2.drawContours(data, [xy], self.ds[0], self.ds[1],
-                                     self.ds[2])
+                    cv2.drawContours(data, [xy], ds[0], ds[1], ds[2])
             cv2.imwrite(self.dir, data)
             self.data = data
         else:
