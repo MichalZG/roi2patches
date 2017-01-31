@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from read_roi import read_roi_zip
+import cv2
 
 class Image:
     """
@@ -35,7 +36,6 @@ class Image:
 
 
     def load_data(self):
-        import cv2
         data = cv2.imread(self.dir)
         return data
 
@@ -249,7 +249,21 @@ class Label:
                 ds = self.ds[_type]
                 for xy in xy_list:
                     cv2.drawContours(data, [xy], ds[0], ds[1], ds[2])
-            cv2.imwrite(self.dir, data)
             self.data = data
         else:
             self.load_data()
+
+
+    def save_label_image(self, save_dir=None):
+        """
+        Save rel_image with label colors
+        """
+        if self.data is None:
+            create_label_data()
+        if save_dir is None:
+            save_dir = self.dir
+        
+        cv2.imwrite(save_dir, self.data)
+
+
+        
