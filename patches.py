@@ -42,8 +42,8 @@ class Patch:
         create data based on mask and image related to mask
         """
         self.data = self.rel_mask.rel_image.data[
-            self.xy[0]-self.size[0]/2:self.xy[0]+self.size[0]/2,
-            self.xy[1]-self.size[1]/2:self.xy[1]+self.size[1]/2]
+            self.xy[0]-self.size[0]/2.:self.xy[0]+self.size[0]/2.,
+            self.xy[1]-self.size[1]/2.:self.xy[1]+self.size[1]/2.]
 
 
     def save(self):
@@ -52,7 +52,6 @@ class Patch:
         """
         self.patch_name = "_".join(
             (self.rel_mask.rel_image.name,
-             str(self.xy[0]), str(self.xy[1]), self.fmt))
-        
+             str(self.xy[0]), str(self.xy[1]), self.type)) + self.fmt
         cv2.imwrite(os.path.join(
-            self.save_dir, self.patch_name), self.data)
+            self.save_dir, self.type, self.patch_name), self.data)
