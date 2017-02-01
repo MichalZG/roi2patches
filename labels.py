@@ -9,6 +9,7 @@ class Image:
     """
     def __init__(self, im_dir, rois_dir=None, label_dir=None, mask_dir=None):
         self.dir = im_dir
+        self.name = os.path.basename(im_dir).replace('.tif', '') 
         self.data = self.load_data()
         self.tumor_type = None
         self.roi = None
@@ -18,7 +19,7 @@ class Image:
         self.label = None
         self.mask = None
 
-
+    
     def set_tumor_type(self, tumor_type):
         """
         Set tumor type
@@ -54,10 +55,11 @@ class Image:
         """
         Return dict of roi objects, if roi does not exist return None
         """
-        if self.rois:
-            return self.rois
+        if self.roi:
+            return self.roi.get_rois()
         else:
             roi = Roi(self, self.rois_dir)
+            self.roi = roi
             return roi.get_rois()
 
 
@@ -206,7 +208,6 @@ class Label:
         """
         Return label data.
         """
-        import cv2
         if self.data:
             return self.data
         else:
@@ -259,11 +260,124 @@ class Label:
         Save rel_image with label colors
         """
         if self.data is None:
-            create_label_data()
+            self.create_label_data()
         if save_dir is None:
             save_dir = self.dir
-        
         cv2.imwrite(save_dir, self.data)
 
 
+class Mask:
+    """
+    Mask class, saved as numpy npy file
+    """
+    def __init__(self, rel_image, rel_label=None, update=True, 
+                 mask_dir=None):
+        self.rel_image = rel_image
+        self.rel_label = rel_label
+        self.dir = self.create_dir(mask_dir)
+        self.exist = self.check_exist()
+        self.update = update
+        self.data = None
+        self.ds = {'background': [1, (255, 0, 0)], # FIXME
+                   'cytoplasm': [2, (0, 255, 0)],
+                   'nuclei': [3, (0, 0, 255)],
+                   'border': [4, (0, 0, 0)]}
+
+
+    def create_dir(self, mask_dir):
+        """
+        Create label dir
+        """
+        if mask_dir is not None:
+            self.dir = mask_dir
+        else:
+            head, tail = os.path.split(self.rel_image.dir)
+            return os.path.join(head, tail.replace('.tif', '_mask.npy'))
+
+
+    def check_exist(self):
+        """
+        Check if label file exist.
+        Returns:
+            True if successful, False otherwise.
+        """
+        print(self.dir)
+        if os.path.isfile(self.dir):
+            return True
+
+        return False
+
+
+    def get_data(self):
+        """
+        Return label data.
+        """
+        if self.data is None:
+            self.create_mask_data()
+        else:
+            return self.data
+
+    def redraw(self):
+        """
+        check if redraw is necessary
+        """
+        if (self.exist and self.update):
+            return True
+        elif (self.exist and not self.update):
+            return False
+        else:
+            return True
+
+
+    def load_rel_label(self, label):
+        """
+        Load label data
+        If self.label == None will try find label in default place,
+        if self.label is path will create new label object with image from path
+        if self.label is object then no problem...
+        """
+        # FIXME
+        if isinstance(label, Label):
+            self.rel_label = label
+        elif label is None:
+            try:
+                print(self.dir.replace('_mask.npy', '.tif'))
+                self.rel_label = Label(self.rel_image)
+            except:
+                print('Problem 1 with create related label!')
+        elif os.path.isfile(label):
+            self.rel_label = Label(self.rel_image, label_dir=label)
+        else:
+            print('Problem with 2 create related label!')
+
+
+    def create_mask_data(self):
+        """
+        Create new label image or load exists
+        """
+        if self.redraw():
+            data = self.rel_label.data.copy()
+            mask = np.zeros_like(data[:,:,0], dtype='int')
+            for _type in ('background', 'cytoplasm', 'nuclei', 'border'):
+                ds = self.ds[_type]
+                color_mask = np.all(data == ds[1], axis=-1)
+                mask[color_mask] = ds[0]
+            self.data = mask
+        else:
+            self.load_data()
+
+
+    def load_data(self):
+        self.data = np.load(self.dir)
+
+
+    def save_mask(self, save_dir=None):
+        """
+        Save mask 
+        """
+        if self.data is None:
+            self.create_mask_data()
+        if save_dir is None:
+            save_dir = self.dir
         
+        np.save(save_dir, self.data)
