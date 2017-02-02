@@ -197,7 +197,6 @@ class Label:
         Returns:
             True if successful, False otherwise.
         """
-        print(self.dir)
         if os.path.isfile(self.dir):
             return True
 
@@ -237,9 +236,7 @@ class Label:
         """
         Create new label image or load exists
         """
-        import cv2
         if self.redraw():
-            print(self.rel_image.data)
             data = self.rel_image.data.copy()
             rois = self.roi.get_rois()
             for _type in ('background', 'cytoplasm', 'nuclei', 'border'):
@@ -301,7 +298,6 @@ class Mask:
         Returns:
             True if successful, False otherwise.
         """
-        print(self.dir)
         if os.path.isfile(self.dir):
             return True
 
@@ -341,7 +337,6 @@ class Mask:
             self.rel_label = label
         elif label is None:
             try:
-                print(self.dir.replace('_mask.npy', '.tif'))
                 self.rel_label = Label(self.rel_image)
             except:
                 print('Problem 1 with create related label!')
