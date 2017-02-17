@@ -15,7 +15,7 @@ train_part = 0.5
 patch_shape = [5, 5, 3]
 chunk_size = 100
 
-images_path = '/home/pi/Programs/python-programs/roi2patches/data/source_images/test_data/'
+images_path = '/home/pi/Programs/python-programs/roi2patches/data/source_images/'
 db_dir = '/home/pi/Programs/python-programs/roi2patches/data/datasets'
 db_name = '71x71_rgbtest.h5'
 
@@ -28,6 +28,19 @@ def create_dsets_dict(images_path, im_ext='*.tif', train_part=0.8):
     train_pack, val_pack = images[:int(train_part*len(images))], \
             images[int(train_part*len(images)):]
     #test_pack, val_pack = images[:4], images[4:]
+    
+    train_pack = ['11696_x40_10.tif', '11720b_x40_06.tif', '11745_x40_07.tif',
+                  '11712_x40_08.tif', '11704_x40_02.tif', '11704_x40_03.tif',
+                  '11745_x40_09.tif', '11591_x40_04.tif', '11745_x40_08.tif',
+                  '11714_x40_09.tif', '11720b_x40_02.tif', '11743_x40_05.tif',
+                  '11601_x40_11.tif', '11930_x40_07.tif', '11715_x40_08.tif',
+                  '11692a_x40_02.tif', '11692a_x40_06.tif', '11892_x40_07.tif',
+                  '11749_x40_10.tif', '11743_x40_09.tif', '11556_x40_05.tif']
+    val_pack = ['11537b_x40_09.tif', '11725a_x40_02.tif', '11892_x40_10.tif',
+                '11930_x40_04.tif', '11691_x40_09.tif', '11696_x40_05.tif', '11736_x40_04.tif']
+    
+    train_pack = [os.path.join(images_path, im) for im in train_pack]
+    val_pack = [os.path.join(images_path, im) for im in val_pack]
 
     dsets_dict = {'X': train_pack, 'X_val': val_pack}
     
