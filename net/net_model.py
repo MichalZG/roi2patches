@@ -26,4 +26,4 @@ def create_net():
     network = dropout(network, 0.5)
     network = fully_connected(network, 4, activation='softmax')
 
-
+    return X, Y, network

@@ -37,10 +37,10 @@ Y_test = h5f['cifar10_Y_test']
 
 h5f = h5py.File('/home/pi/Programs/python-programs/roi2patches/data/datasets/28x28_rgb_eq_test.h5', 'r')
 
-dset_X = h5f['X']
-dset_Y = h5f['Y']
-dset_X_test = h5f['X_val']
-dset_Y_test = h5f['Y_val']
+dset_X = h5f['X'][:1000]
+dset_Y = h5f['Y'][:1000]
+dset_X_test = h5f['X_val'][:1000]
+dset_Y_test = h5f['Y_val'][:1000]
 dset_Y = to_categorical(dset_Y[...]-1, 4)
 dset_Y_test = to_categorical(dset_Y_test[...]-1, 4)
 
@@ -58,7 +58,7 @@ img_aug.add_random_rotation(max_angle=25.)
 # Convolutional network building
 with tf.Graph().as_default():
     
-    from cifar_model import create_net
+    from net_model import create_net
 
     X, Y, network = create_net()
     loss = tf.reduce_mean(
@@ -88,7 +88,7 @@ with tf.Graph().as_default():
         saver.save(sess, 'my-model')
 with tf.Graph().as_default():
     
-    from cifar_model import create_net
+    from net_model import create_net
 
     X, Y, network = create_net()
     loss = tf.reduce_mean(
