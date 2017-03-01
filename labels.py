@@ -139,9 +139,10 @@ class Roi:
         """
         head, tail = os.path.split(self.rel_image.dir)
         name_prefix = tail.replace('.tif', '')
-        name_suffix = '.tif.zip'
+        name_suffix = '.zip'
         for _type in ['nuclei', 'cytoplasm', 'background']:
             xy_list = []
+            roi_array = None
 
             try:
                 roi_array = read_roi_zip(os.path.join(
@@ -149,14 +150,18 @@ class Roi:
             except FileNotFoundError:
                 print('{} roi not found'.format(_type))
 
-            for r in roi_array.values(): # FIXME
-                xy = []
-                for x, y in zip(r['x'], r['y']):
-                    xy.append([x, y])
-                xy_list.append(np.array(xy))
-            setattr(self, _type, xy_list)
+            if roi_array:
+                for r in roi_array.values(): # FIXME
+                    xy = []
+                    try:
+                        for x, y in zip(r['x'], r['y']):
+                            xy.append([x, y])
+                        xy_list.append(np.array(xy))
+                    except KeyError:
+                        pass
+                setattr(self, _type, xy_list)
 
-        self.get_rois()
+        #self.get_rois()
 
 
 class Label:
@@ -245,8 +250,9 @@ class Label:
                 else:
                     xy_list = rois[_type]
                 ds = self.ds[_type]
-                for xy in xy_list:
-                    cv2.drawContours(data, [xy], ds[0], ds[1], ds[2])
+                if xy_list is not None:
+                    for xy in xy_list:
+                        cv2.drawContours(data, [xy], ds[0], ds[1], ds[2])
             self.data = data
         else:
             self.load_data()
